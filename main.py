@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from sklearn import datasets
+
 from sklearn.ensemble import BaseEnsemble
 from sklearn.base import ClassifierMixin, clone
 from sklearn.utils.validation import check_array, check_is_fitted, check_X_y
@@ -7,13 +9,17 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import BaggingClassifier
 
 from scipy.io.arff import loadarff
-from sklearn import datasets
+
 from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.naive_bayes import MultinomialNB
+
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 
-number_of_estimators = 10
-
+number_of_estimators = 50
+estimator = MultinomialNB()
+dataset = datasets.load_wine()
 
 
 class RandomSubspaceEnsemble(BaseEnsemble, ClassifierMixin):
@@ -90,31 +96,25 @@ class RandomSubspaceEnsemble(BaseEnsemble, ClassifierMixin):
         return np.array(probas_)
 
 
-clf = AdaBoostClassifier(base_estimator=None, n_estimators=number_of_estimators, random_state=None)
-clf2 = RandomSubspaceEnsemble(base_estimator=None, n_estimators=number_of_estimators)
-
 # dat_file = r"D:\Python\UM\iris1.dat"
 # text = ''
 # with open(dat_file, 'r') as file:
 #     text = file.read()
 #     print(text)
 
-dataset = datasets.load_wine()
 X = dataset.data
 y = dataset.target
 print("Total number of features", X.shape[1])
 
 n_splits = 5
 n_repeats = 10
-rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=1234)
+rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats, random_state=123)
 
-# clf = RandomSubspaceEnsemble(base_estimator = None, n_estimators = number_of_estimators)
-
-clf = RandomSubspaceEnsemble(base_estimator=GaussianNB(), n_estimators=number_of_estimators, n_subspace_features=5,
+clf = RandomSubspaceEnsemble(base_estimator=estimator, n_estimators=number_of_estimators, n_subspace_features=5,
                              hard_voting=True, random_state=123)
-clf2 = AdaBoostClassifier(base_estimator=None, n_estimators=number_of_estimators, random_state=123)
+clf2 = AdaBoostClassifier(base_estimator=estimator, n_estimators=number_of_estimators, random_state=123)
 
-clf3 = BaggingClassifier(base_estimator=None, n_estimators=number_of_estimators, random_state=123)
+clf3 = BaggingClassifier(base_estimator=estimator, n_estimators=number_of_estimators, random_state=123)
 scores = []
 for train, test in rskf.split(X, y):
     clf.fit(X[train], y[train])
