@@ -104,7 +104,7 @@ class RandomSubspaceEnsemble(BaseEnsemble, ClassifierMixin):
 
 X = dataset.data
 y = dataset.target
-print("Total number of features", X.shape[1])
+print("Total number of features is", X.shape[1])
 
 n_splits = 5
 n_repeats = 10
