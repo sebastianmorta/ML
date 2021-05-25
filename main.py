@@ -15,6 +15,7 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 number_of_estimators = 10
 
 
+
 class RandomSubspaceEnsemble(BaseEnsemble, ClassifierMixin):
 
     def __init__(self, base_estimator=None, n_estimators=10, n_subspace_features=5, hard_voting=True,
