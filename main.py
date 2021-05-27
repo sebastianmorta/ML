@@ -14,12 +14,19 @@ from scipy.io.arff import loadarff
 from sklearn.naive_bayes import GaussianNB
 from sklearn.naive_bayes import BernoulliNB
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.tree import DecisionTreeClassifier
 
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import RepeatedStratifiedKFold
 
 number_of_estimators = 50
 # estimator = MultinomialNB()
+clfs = {
+    'GNB': GaussianNB(),
+    'BNB': BernoulliNB(),
+    'CART': DecisionTreeClassifier(random_state=42),
+    'MNB': MultinomialNB()
+}
 estimator = GaussianNB()
 dataset = datasets.load_wine()
 
@@ -103,22 +110,13 @@ dataset = datasets.load_wine()
 # with open(dat_file, 'r') as file:
 #     text = file.read()
 #     print(text)
-def dataSetReader():
-    data = []
-    with open('datasets\\iris.dat') as file:
-        n, m = file.readline().split()
-        for i in file:
-            if not i.isspace():
-                data.append([int(x) for x in i.split()])
-    return data, int(n), int(m)
+def dataSetReader(dataset):
+    dataset = np.genfromtxt("%s.csv" % (dataset), delimiter=",")
+    X = dataset[:, :-1]
+    Y = dataset[:, -1].astype(int)
 
 
-
-
-
-
-
-dataSetReader()
+dataSetReader('datasets/iris')
 X = dataset.data
 y = dataset.target
 print("Total number of features is", X.shape[1])
