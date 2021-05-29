@@ -49,7 +49,7 @@ class Ensemble:
                         self.scores[clf_id, data_id, fold_id, method_id] = accuracy_score(y[test], y_pred)
                         # print(accuracy_score(y[test], y_pred))
         np.save('results', self.scores)
-        print(self.scores)
+        # print(self.scores)
 
 a=Ensemble()
 a.makeResult()
