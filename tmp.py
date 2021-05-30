@@ -17,7 +17,8 @@ from RandomSubspace import RandomSubspaceEnsemble
 
 class Ensemble:
     def __init__(self, datasets=os.listdir('datasets')):
-        self.n_datasets = len(datasets)
+        self.n_datasets = 3
+        # self.n_datasets = len(datasets)
         self.n_splits = 5
         self.n_repeats = 2
         self.rskf = RepeatedStratifiedKFold(n_splits=self.n_splits, n_repeats=self.n_repeats, random_state=1234)
@@ -31,25 +32,25 @@ class Ensemble:
             "AdaBoost": AdaBoostClassifier,
             "Bagging": BaggingClassifier
         }
-        self.scores = np.zeros((len(self.clfs), self.n_datasets, self.n_splits * self.n_repeats, len(self.methods)))
         self.n_estimators = [5, 10, 15]
+        self.scores = np.zeros((len(self.clfs), self.n_datasets, self.n_splits * self.n_repeats, len(self.methods), len(self.n_estimators)))
 
     def makeResult(self):
-        for data_id, dataset in enumerate(self.datasets):
+        for data_id, dataset in enumerate(self.datasets[:3]):
             dataset = np.genfromtxt("datasets/%s" % (dataset), delimiter=",")
             for method_id, method_name in enumerate(self.methods):
                 X = dataset[:, :-1]
                 y = dataset[:, -1].astype(int)
                 for fold_id, (train, test) in enumerate(self.rskf.split(X, y)):
                     for clf_id, clf_name in enumerate(self.clfs):
-                        clf_base = clone(self.clfs[clf_name])
-                        for est in self.n_estimators:
-                            method = self.methods[method_name](base_estimator=self.clfs[clf_name], n_estimators=est,
+                        # clf_base = clone(self.clfs[clf_name])
+                        for est_id, est_amount in enumerate(self.n_estimators):
+                            method = self.methods[method_name](base_estimator=clone(self.clfs[clf_name]), n_estimators=est_amount,
                                                                random_state=123)
 
                             method.fit(X[train], y[train])
                             y_pred = method.predict(X[test])
-                            self.scores[clf_id, data_id, fold_id, method_id] = accuracy_score(y[test], y_pred)
+                            self.scores[clf_id, data_id, fold_id, method_id, est_id] = accuracy_score(y[test], y_pred)
                         # print(accuracy_score(y[test], y_pred))
         np.save('results', self.scores)
         # print(self.scores)
