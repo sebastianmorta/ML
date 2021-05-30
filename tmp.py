@@ -32,6 +32,7 @@ class Ensemble:
             "Bagging": BaggingClassifier
         }
         self.scores = np.zeros((len(self.clfs), self.n_datasets, self.n_splits * self.n_repeats, len(self.methods)))
+        self.n_estimators = [5, 10, 15]
 
     def makeResult(self):
         for data_id, dataset in enumerate(self.datasets):
@@ -42,16 +43,19 @@ class Ensemble:
                 for fold_id, (train, test) in enumerate(self.rskf.split(X, y)):
                     for clf_id, clf_name in enumerate(self.clfs):
                         clf_base = clone(self.clfs[clf_name])
-                        method = self.methods[method_name](base_estimator=self.clfs[clf_name], n_estimators=10, random_state=123)
+                        for est in self.n_estimators:
+                            method = self.methods[method_name](base_estimator=self.clfs[clf_name], n_estimators=est,
+                                                               random_state=123)
 
-                        method.fit(X[train], y[train])
-                        y_pred = method.predict(X[test])
-                        self.scores[clf_id, data_id, fold_id, method_id] = accuracy_score(y[test], y_pred)
+                            method.fit(X[train], y[train])
+                            y_pred = method.predict(X[test])
+                            self.scores[clf_id, data_id, fold_id, method_id] = accuracy_score(y[test], y_pred)
                         # print(accuracy_score(y[test], y_pred))
         np.save('results', self.scores)
         # print(self.scores)
 
-a=Ensemble()
+
+a = Ensemble()
 a.makeResult()
 # datasets = os.listdir('datasets')
 # clfs = {
