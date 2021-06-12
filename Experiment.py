@@ -15,8 +15,8 @@ from sklearn.svm import SVC
 from RandomSubspace import RandomSubspaceEnsemble
 
 class Ensemble:
-    def __init__(self, datasets=os.listdir('datasets')):
-        self.n_datasets = 1
+    def __init__(self, datasets=os.listdir('datasets2')):
+        self.n_datasets = 20
         # self.n_datasets = len(datasets)
         self.n_splits = 5
         self.n_repeats = 2
@@ -27,13 +27,47 @@ class Ensemble:
             'CART': DecisionTreeClassifier(random_state=1234),
         }
         self.methods = {
-            "RndSpcEnmbl": RandomSubspaceEnsemble,
             "AdaBoost": AdaBoostClassifier,
-            "Bagging": BaggingClassifier
+            "Bagging": BaggingClassifier,
+            "RndSpcEnmbl": RandomSubspaceEnsemble,
+
         }
         self.n_estimators = [5, 10, 15]
         self.scores = np.zeros((len(self.clfs), len(self.methods), self.n_datasets, self.n_splits * self.n_repeats,
                                 len(self.n_estimators)))
+
+    def skip_lines(self, path: 'str') -> int:
+        num = 0
+        if path.endswith('.dat'):
+            with open(path) as f:
+                for line in f.readlines():
+                    num += 1
+                    if '@data' in line:
+                        return num
+        else:
+            return 1
+
+    def drop_rows_with_missing_values(self, dataset) -> pd.DataFrame:
+        dataset.dropna(axis=0, how='any')
+        return dataset
+
+    def drop_insufficient_rows(self, dataset, class_list) -> pd.DataFrame:
+        minimum_amount_of_fata = len(dataset.index) * 0.001
+        if minimum_amount_of_fata < 10:
+            minimum_amount_of_fata = 10
+        for c in class_list:
+            if dataset.iloc[:, -1:].value_counts()[c] < minimum_amount_of_fata:
+                dataset = dataset[dataset.iloc[:, -1] != c]
+        return dataset
+
+    def prepare_data(self, dataset_dir_path, dataset_name) -> pd.DataFrame:
+        dataset_path = os.path.join(dataset_dir_path, dataset_name)
+        dataset = pd.read_csv(dataset_path, header=None)
+        classes_list = dataset.iloc[:, -1].unique()
+        dataset = self.drop_rows_with_missing_values(dataset)
+        dataset = self.drop_insufficient_rows(dataset, classes_list)
+        dataset = self.string_to_number(dataset)
+        return dataset
 
     def string_to_number(self, dataset):
         le = preprocessing.LabelEncoder()
@@ -43,10 +77,26 @@ class Ensemble:
                 dataset[i] = le.fit_transform(dataset[i])
         return dataset
 
+    def changeLabels(self, labels, low):
+        for i in range(len(labels)):
+            labels[i] = labels[i] + low
+        return labels
+
+    def changeLabels2(self, labels, high):
+        for i in range(len(labels)):
+            labels[i] = labels[i] - high
+        return labels
+
     def makeResult(self):
-        for data_id, dataset in enumerate(self.datasets[0]):
-            dataset = np.genfromtxt("datasets/%s" % (dataset), delimiter=",")
+        for data_id, dataset in enumerate(self.datasets):
+
+            # dataset = np.genfromtxt("datasets/%s" % (dataset), delimiter=",")
+            dataset_path = "datasets2"
+            print(colored(dataset, 'red'))
+            dataset = self.prepare_data(dataset_path, dataset)
             dataset = self.string_to_number(dataset)
+            dataset = dataset.to_numpy()
+
             X = dataset[:, :-1]
             y = dataset[:, -1].astype(int)
             for method_id, method_name in enumerate(self.methods):

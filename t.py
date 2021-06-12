@@ -143,7 +143,14 @@ def T_student(clf, scores):
                 dataset[i] = le.fit_transform(dataset[i])
         return dataset
 
-
+    def prepare_data(self, dataset_dir_path, dataset_name) -> pd.DataFrame:
+        dataset_path = os.path.join(dataset_dir_path, dataset_name)
+        dataset = pd.read_csv(dataset_path, skiprows=self.skip_lines(dataset_path), header=None)
+        classes_list = dataset.iloc[:, -1].unique()
+        dataset = self.drop_rows_with_missing_values(dataset)
+        dataset = self.drop_insufficient_rows(dataset, classes_list)
+        dataset = self.string_to_number(dataset)
+        return dataset
 
 
 

@@ -55,11 +55,32 @@ class RandomSubspaceEnsemble(BaseEnsemble, ClassifierMixin):
             for i, member_clf in enumerate(self.ensemble_):
                 pred_.append(member_clf.predict(X[:, self.subspaces[i]]))
             # Zamiana na miacierz numpy (ndarray)
-            pred_ = np.array(pred_)
+            # pred_ = np.array(pred_)
+            pred_ = np.asarray(pred_).T
             # Liczenie glosow
-            prediction = np.apply_along_axis(lambda x: np.argmax(np.bincount(x)), axis=1, arr=pred_.T)
+            # print(pred_)
+            # prediction = np.apply_along_axis(lambda x: np.argmax(np.bincount(x)), axis=1, arr=pred_.T)
+            prediction = np.apply_along_axis(
+                lambda x: np.argmax(
+                    np.bincount(x)),
+                axis=1, arr=pred_)
+            #
             # Zwrocenie predykcji calego zespolu
-            return self.classes_[prediction]
+            # print("pred",prediction)
+            # print("class",self.classes_)
+
+            try:
+                return self.classes_[prediction]
+            except:
+                try:
+                    return self.classes_[prediction - 1]
+                except:
+                    try:
+                        return self.classes_[prediction - 2]
+                    except:
+                        return self.classes_[prediction - 3]
+
+            # return np.where(self.classes_==prediction.argmax())
 
         else:
             # Podejmowanie decyzji na podstawie wektorow wsparcia
