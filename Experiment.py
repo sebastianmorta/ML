@@ -14,10 +14,9 @@ from sklearn.svm import SVC
 
 from RandomSubspace import RandomSubspaceEnsemble
 
-
 class Ensemble:
     def __init__(self, datasets=os.listdir('datasets')):
-        self.n_datasets = 9
+        self.n_datasets = 1
         # self.n_datasets = len(datasets)
         self.n_splits = 5
         self.n_repeats = 2
@@ -36,9 +35,18 @@ class Ensemble:
         self.scores = np.zeros((len(self.clfs), len(self.methods), self.n_datasets, self.n_splits * self.n_repeats,
                                 len(self.n_estimators)))
 
+    def string_to_number(self, dataset):
+        le = preprocessing.LabelEncoder()
+        datatypes = dataset.dtypes
+        for i in range(len(datatypes)):
+            if datatypes[i] == 'object':
+                dataset[i] = le.fit_transform(dataset[i])
+        return dataset
+
     def makeResult(self):
-        for data_id, dataset in enumerate(self.datasets[:9]):
+        for data_id, dataset in enumerate(self.datasets[0]):
             dataset = np.genfromtxt("datasets/%s" % (dataset), delimiter=",")
+            dataset = self.string_to_number(dataset)
             X = dataset[:, :-1]
             y = dataset[:, -1].astype(int)
             for method_id, method_name in enumerate(self.methods):

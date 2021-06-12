@@ -32,7 +32,6 @@ class RandomSubspaceEnsemble(BaseEnsemble, ClassifierMixin):
             raise ValueError("Number")
 
         self.subspaces = np.random.randint(0, self.n_features, (self.n_estimators, self.n_subspace_features))
-
         # Wyuczenie nowych modeli i stworzenie zespolu
         self.ensemble_ = []
         for i in range(self.n_estimators):
