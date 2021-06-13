@@ -119,8 +119,8 @@ class Ensemble:
         # print(self.scores)
 
 
-a = Ensemble()
-a.makeResult()
+# a = Ensemble()
+# a.makeResult()
 # datasets = os.listdir('datasets')
 # clfs = {
 #     'GNB': GaussianNB(),

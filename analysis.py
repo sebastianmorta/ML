@@ -1,3 +1,5 @@
+import csv
+
 import numpy as np
 from matplotlib import pyplot
 from scipy.stats import rankdata, ranksums, ttest_rel
@@ -10,6 +12,7 @@ en = Ensemble()
 
 def wilcoxon(clf):
     print(colored("WILKOXON", 'magenta'))
+    # print(clf)
     mean_scores = np.mean(clf, axis=2).T
     # print("\nMean scores:\n", mean_scores)
 
@@ -55,7 +58,6 @@ def wilcoxon(clf):
     print(significance_table)
 
 
-
 def tStudent(clf):
     print(colored("T-STUDENT", 'green'))
     mean_scores = np.mean(clf, axis=2).T
@@ -96,6 +98,124 @@ def tStudent(clf):
     print(significance_table)
 
 
+def saveToSCV(data, first_row, y_label, name):
+    with open(name+'.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(first_row)
+        # writer.writerow([["GNB", "CART"], ["GNB", "CART"], ["GNB", "CART"]])
+        # y_label2 = []
+        # for i in y_label:
+        #     elo = os.path.splitext(i)
+        #     y_label2.append(elo[0])
+        for i in range(len(data)):
+            for j in range(3):
+                data[i][j] = round(data[i][j], 3)
+
+        for y, d in zip(y_label, data):
+
+            writer.writerow([y]+d.tolist())
+
+
+# saveToSCV([1,2,3,4,5,6])
+
+
+def getTotalMeanScores(scores):
+    print(colored('==================MEAN=========', 'red'))
+    ranks = []
+    print("[AdaBoost, Bagging, Random Subspace]")
+    # RANKS ALL
+    print('\nMEAN RANKS')
+
+    mean_scores = np.mean(scores, axis=4)
+    mean_scores = np.mean(mean_scores, axis=0)
+    mean_scores = np.mean(mean_scores, axis=2).T
+    for mr in mean_scores:
+        ranks.append(rankdata(mr).tolist())
+    ranks = np.array(ranks)
+    mean_ranks = np.mean(ranks, axis=0)
+    print(mean_ranks)
+    # MEAN SCORES ALL
+    print('\nMEAN SCORES')
+
+    mean_scores2 = np.mean(scores, axis=4)
+    mean_scores2 = np.mean(mean_scores2, axis=0)
+    mean_scores2 = np.mean(mean_scores2, axis=2)
+    mean_scores2 = np.mean(mean_scores2, axis=1).T
+    print(colored(mean_scores2, 'red'))
+
+    ###########DATASETS
+    print('\n\nDATASETS')
+
+    mean_scores3 = np.mean(scores, axis=4)
+    mean_scores3 = np.mean(mean_scores3, axis=0)
+    mean_scores3 = np.mean(mean_scores3, axis=2).T
+    print(colored(mean_scores3, 'red'))
+    # saveToSCV(mean_scores3, ["Dataset", "Ada Boost", "Bagging", "Random Subspace"], os.listdir('datasets2'))
+    ##########NUMBER OF ESTIMATORS
+    print('\n\nNUMBER OF ESTIMATORS')
+    mean_scores4 = np.mean(scores, axis=3)
+    mean_scores4 = np.mean(mean_scores4, axis=0)
+    mean_scores4 = np.mean(mean_scores4, axis=1).T
+    print(colored(mean_scores4, 'red'))
+    saveToSCV(mean_scores, ["Estimators Amount", "Ada Boost", "Bagging", "Random Subspace"], [5,10,15],"byest")
+
+    #######BASE CLFS
+    print('\n\nBASE CLFS')
+    mean_scores5 = np.mean(scores, axis=2)
+    mean_scores5 = np.mean(mean_scores5, axis=2)
+    mean_scores5 = np.mean(mean_scores5, axis=2)
+    print(colored(mean_scores5, 'red'))
+    saveToSCV(mean_scores5, ["Base Clf", "Ada Boost", "Bagging", "Random Subspace"],['GNB', 'CART'],"byclf" )
+
+
+
+def plotByClf(scr):
+    by_estimators_amount = printResultBy(4, scr)
+    order = [6, 3, 4, 4, 5, 3, 6, 7, 3, 26, 4, 3, 7, 3, 3, 11, 3, 4, 3, 2]
+    estim_qty = 0
+    base_clf_idx = 0
+    colors = ["mo--", "go--", 'bo--', 'ro--', 'yo--', 'co--']
+    # colors = ["mo", "go", 'bo', 'ro', 'yo', 'co']
+    x_label = os.listdir('datasets2')
+    tmp = []
+    for i in x_label:
+        elo = os.path.splitext(i)
+        tmp.append(elo[0])
+    x_label=tmp
+    x_label = [y for _, y in sorted(zip(order, x_label))]
+    met = ["AdaBoost-GNB", "Bagging-GNB", "RandomSubspace-GNB", "AdaBoost-CART", "Bagging-CART", "RandomSubspace-CART"]
+
+    plt.rcParams.update({'font.size': 16})
+    for estim in by_estimators_amount:
+        # clf_base, method, data, fold
+        estim_qty += 5
+        values = []
+        clfs = printResultBy(0, estim)
+        for clf in clfs:
+            #  method, data, fold
+            base_clf_idx += 1
+            if base_clf_idx == 2:
+                base_clf_idx = 0
+
+            val = np.mean(clf, axis=2).T
+            val = printResultBy(1, val)
+            values += val
+        fig, ax = plt.subplots(figsize=(20, 16))
+
+        for v, color, m in zip(values, colors, met):
+            v = [y for _, y in sorted(zip(order, v))]
+            print("values",v)
+            ax.plot(x_label, v, color, label=m, markersize=14)
+        plt.title(f"Estimators Amount - {estim_qty}", size=20)
+        plt.xticks(rotation=50)
+        plt.xlabel("Datasets", size=16)
+        plt.ylabel("Accuracy", size=16)
+        plt.legend(prop={'size': 16})
+        plt.grid(1, 'major')
+        print("------------------")
+    # plt.savefig(f"Estimators Amount - {estim_qty}")
+    plt.show()
+
 
 statistics = {
     "WILKOXON": wilcoxon,
@@ -119,41 +239,53 @@ def printResultBy(axis_dim, res):
     return result
 
 
-# a=np.arange(48).reshape(2,2,3,4)
-# scores = printResultBy(4, scr)
-# print(scr.shape)
-
-
-#
-# for i in range(4):
 def calculateStatistics():
     scr = np.load('results.npy')
+    # getTotalMeanScores(scr)
     # clf_base, method, data, fold, est_qty
-
-    by_estimators_amount = printResultBy(4, scr)
+    ds = os.listdir('datasets2')
+    plotByClf(scr)
     for stat_id, stat_name in enumerate(statistics):
         base_clf = ['GNB', 'CART']
-        estim_qty = 5
+        # estim_qty = 5
         base_clf_idx = 0
-        for estim in by_estimators_amount:
 
-            # clf_base, method, data, fold
-            print(colored("\n============== Estimators quantity: " + str(estim_qty) + " ==============", 'blue'))
-            print()
-            estim_qty += 5
-            clfs = printResultBy(0, estim)
-            for clf in clfs:
-                print(colored("========= Base clf: " + str(base_clf[base_clf_idx]), 'yellow'))
-                base_clf_idx += 1
-                if base_clf_idx == 2:
-                    base_clf_idx = 0
-                # method, data, fold,
-                # print("by folds")
-                # print("\nScores:\n", scores.shape)
+        clfs = printResultBy(0, scr)
+        for clf in clfs:
+            #  method, data, fold,est_qty
+            print(colored("========= Base clf: " + str(base_clf[base_clf_idx]), 'yellow'))
+            base_clf_idx += 1
+            if base_clf_idx == 2:
+                base_clf_idx = 0
+            by_estimators_amount = printResultBy(3, clf)
+            estim_qty = 5
+            for estim in by_estimators_amount:
+                #  method, data, fold
+                print(colored("\n============== Estimators quantity: " + str(estim_qty) + " ==============", 'blue'))
+                print()
+                estim_qty += 5
+                statistics[stat_name](estim)
+                # by_estimators_amount = printResultBy(4, scr)
+                # for estim in by_estimators_amount:
+                #     # clf_base, method, data, fold
+                #     print(colored("\n============== Estimators quantity: " + str(estim_qty) + " ==============", 'blue'))
+                #     print()
+                #     estim_qty += 5
+                #     clfs = printResultBy(0, estim)
+                #     for clf in clfs:
+                #         #  method, data, fold
+                #         print(colored("========= Base clf: " + str(base_clf[base_clf_idx]), 'yellow'))
+                #         base_clf_idx += 1
+                #         if base_clf_idx == 2:
+                #             base_clf_idx = 0
+                #         statistics[stat_name](estim)
 
-                statistics[stat_name](clf)
 
 # calculateStatistics()
-
+'''
+methods(datasets)
+dla każdego klasyfikatora 
+wykres 
+'''
 
 # calculateStatistics()
