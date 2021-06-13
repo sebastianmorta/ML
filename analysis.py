@@ -9,13 +9,143 @@ from pipenv.vendor.vistir.termcolors import colored
 
 en = Ensemble()
 
+def wilcoxon2(estim):
+    # clf_base, method, data, fold
+    print(colored("WILKOXON2", 'magenta'))
+    # print(clf)
+    mean_scores = np.mean(estim, axis=3).T
+    # clf_base, method, data
+    # print("\nMean scores:\n", mean_scores)
+    # print(mean_scores)
+    ranks = []
+    # for mss in mean_scores:
+    #     for ms in mss:
+    #         ranks.append(rankdata(ms).tolist())
+    # ranks = np.array(ranks)
+    # print("\nRanks:\n", ranks)
 
+
+    #mean_scores = np.mean(mean_scores, axis=0)
+    for mr in mean_scores:
+        ranks.append(rankdata(mr).tolist())
+    ranks = np.array(ranks)
+    # print("\nRanks:\n", ranks)
+
+
+    # mean_ranks =np.mean(mean_ranks_tmp,axis=0)
+    #print(mean_ranks.T)
+    mean_ranks = np.mean(ranks, axis=0)
+    print("\nMean ranks:\n", mean_ranks)
+    # print("AdaBoost, Bagging, Random Subspace")
+
+    alfa = .05
+    w_statistic = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    p_value = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+
+    for i in range(len(en.methods)*len(en.clfs)):
+        for j in range(len(en.methods)*len(en.clfs)):
+            w_statistic[i, j], p_value[i, j] = ranksums(ranks.T[i], ranks.T[j])
+    headers=[]
+    for m in en.methods.keys():
+        for c in en.clfs.keys():
+            headers.append(m+c)
+    # headers = list(en.methods.keys())*2
+    names_column = np.expand_dims(np.array(headers), axis=1)
+    w_statistic_table = np.concatenate((names_column, w_statistic), axis=1)
+    w_statistic_table = tabulate(w_statistic_table, headers, floatfmt=".2f")
+    p_value_table = np.concatenate((names_column, p_value), axis=1)
+    p_value_table = tabulate(p_value_table, headers, floatfmt=".2f")
+    # print("\nw-statistic:\n", w_statistic_table, "\n\np-value:\n", p_value_table)
+
+    advantage = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    advantage[w_statistic > 0] = 1
+    advantage_table = tabulate(np.concatenate(
+        (names_column, advantage), axis=1), headers)
+    # print("\nAdvantage:\n", advantage_table)
+
+    significance = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    significance[p_value <= alfa] = 1
+    significance_table = tabulate(np.concatenate(
+        (names_column, significance), axis=1), headers)
+    # print(colored("\nStatistical significance (alpha = 0.05):", 'magenta'))
+    # print(significance_table)
+    stat_better = significance * advantage
+    stat_better_table = tabulate(np.concatenate(
+        (names_column, stat_better), axis=1), headers)
+    print("Statistically significantly better:\n", stat_better_table)
+    print(len(stat_better_table))
+
+def tStudent2(estim):
+    # clf_base, method, data, fold
+    print(colored("WILKOXON2", 'magenta'))
+    # print(clf)
+    mean_scores = np.mean(estim, axis=3).T
+    # clf_base, method, data
+    # print("\nMean scores:\n", mean_scores)
+    # print(mean_scores)
+    ranks = []
+    # for mss in mean_scores:
+    #     for ms in mss:
+    #         ranks.append(rankdata(ms).tolist())
+    # ranks = np.array(ranks)
+    # print("\nRanks:\n", ranks)
+
+
+    #mean_scores = np.mean(mean_scores, axis=0)
+    for mr in mean_scores:
+        ranks.append(rankdata(mr).tolist())
+    ranks = np.array(ranks)
+    # print("\nRanks:\n", ranks)
+
+
+    # mean_ranks =np.mean(mean_ranks_tmp,axis=0)
+    #print(mean_ranks.T)
+    mean_ranks = np.mean(ranks, axis=0)
+    print("\nMean ranks:\n", mean_ranks)
+    # print("AdaBoost, Bagging, Random Subspace")
+
+    alfa = .05
+    t_statistic = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    p_value = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+
+    for i in range(len(en.methods)*len(en.clfs)):
+        for j in range(len(en.methods)*len(en.clfs)):
+            t_statistic[i, j], p_value[i, j] = ttest_rel(ranks.T[i], ranks.T[j])
+    headers=[]
+    for m in en.methods.keys():
+        for c in en.clfs.keys():
+            headers.append(m+c)
+    # headers = list(en.methods.keys())*2
+    names_column = np.expand_dims(np.array(headers), axis=1)
+    w_statistic_table = np.concatenate((names_column, t_statistic), axis=1)
+    w_statistic_table = tabulate(w_statistic_table, headers, floatfmt=".2f")
+    p_value_table = np.concatenate((names_column, p_value), axis=1)
+    p_value_table = tabulate(p_value_table, headers, floatfmt=".2f")
+    # print("\nw-statistic:\n", w_statistic_table, "\n\np-value:\n", p_value_table)
+
+    advantage = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    advantage[t_statistic > 0] = 1
+    advantage_table = tabulate(np.concatenate(
+        (names_column, advantage), axis=1), headers)
+    # print("\nAdvantage:\n", advantage_table)
+
+    significance = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    significance[p_value <= alfa] = 1
+    significance_table = tabulate(np.concatenate(
+        (names_column, significance), axis=1), headers)
+    # print(colored("\nStatistical significance (alpha = 0.05):", 'magenta'))
+    # print(significance_table)
+    stat_better = significance * advantage
+    stat_better_table = tabulate(np.concatenate(
+        (names_column, stat_better), axis=1), headers)
+    print("Statistically significantly better:\n", stat_better_table)
+    print(len(stat_better_table))
 def wilcoxon(clf):
     print(colored("WILKOXON", 'magenta'))
     # print(clf)
     mean_scores = np.mean(clf, axis=2).T
     # print("\nMean scores:\n", mean_scores)
-
+    # print(mean_scores)
     ranks = []
     for ms in mean_scores:
         ranks.append(rankdata(ms).tolist())
@@ -25,8 +155,8 @@ def wilcoxon(clf):
     mean_ranks = np.mean(ranks, axis=0)
     # mean_ranks =np.mean(mean_ranks_tmp,axis=0)
 
-    # print("\nMean ranks:\n", mean_ranks)
-    # print("Random Subspace Ensemble, AdaBoost, Bagging")
+    print("\nMean ranks:\n", mean_ranks)
+    # print("AdaBoost, Bagging, Random Subspace")
 
     alfa = .05
     w_statistic = np.zeros((len(en.methods), len(en.methods)))
@@ -54,9 +184,13 @@ def wilcoxon(clf):
     significance[p_value <= alfa] = 1
     significance_table = tabulate(np.concatenate(
         (names_column, significance), axis=1), headers)
-    print(colored("\nStatistical significance (alpha = 0.05):", 'magenta'))
-    print(significance_table)
+    # print(colored("\nStatistical significance (alpha = 0.05):", 'magenta'))
 
+    stat_better = significance * advantage
+    stat_better_table = tabulate(np.concatenate(
+        (names_column, stat_better), axis=1), headers)
+    print(colored("Statistically significantly better:\n",  'magenta'))
+    print(stat_better_table,)
 
 def tStudent(clf):
     print(colored("T-STUDENT", 'green'))
@@ -94,8 +228,13 @@ def tStudent(clf):
     significance = np.zeros((len(en.methods), len(en.methods)))
     significance[p_value <= alfa] = 1
     significance_table = tabulate(np.concatenate((names_column, significance), axis=1), headers)
-    print(colored("\nStatistical significance (alpha = 0.05):", 'green'))
-    print(significance_table)
+    # print(colored("\nStatistical significance (alpha = 0.05):", 'green'))
+    # print(significance_table)
+    stat_better = significance * advantage
+    stat_better_table = tabulate(np.concatenate(
+        (names_column, stat_better), axis=1), headers)
+    print(colored("Statistically significantly better:\n",  'green'))
+    print(stat_better_table,)
 
 
 def saveToSCV(data, first_row, y_label, name):
@@ -174,8 +313,8 @@ def plotByClf(scr):
     order = [6, 3, 4, 4, 5, 3, 6, 7, 3, 26, 4, 3, 7, 3, 3, 11, 3, 4, 3, 2]
     estim_qty = 0
     base_clf_idx = 0
-    colors = ["mo--", "go--", 'bo--', 'ro--', 'yo--', 'co--']
-    # colors = ["mo", "go", 'bo', 'ro', 'yo', 'co']
+    # colors = ["mo--", "go--", 'bo--', 'ro--', 'yo--', 'co--']
+    colors = ["mo", "go", 'bo', 'ro', 'yo', 'co']
     x_label = os.listdir('datasets2')
     tmp = []
     for i in x_label:
@@ -200,11 +339,11 @@ def plotByClf(scr):
             val = np.mean(clf, axis=2).T
             val = printResultBy(1, val)
             values += val
-        fig, ax = plt.subplots(figsize=(20, 16))
+        fig, ax = plt.subplots(figsize=(24, 16))
 
         for v, color, m in zip(values, colors, met):
             v = [y for _, y in sorted(zip(order, v))]
-            print("values",v)
+            # print("values",v)
             ax.plot(x_label, v, color, label=m, markersize=14)
         plt.title(f"Estimators Amount - {estim_qty}", size=20)
         plt.xticks(rotation=50)
@@ -212,14 +351,19 @@ def plotByClf(scr):
         plt.ylabel("Accuracy", size=16)
         plt.legend(prop={'size': 16})
         plt.grid(1, 'major')
-        print("------------------")
-    # plt.savefig(f"Estimators Amount - {estim_qty}")
-    plt.show()
+        # print("------------------")
+        plt.savefig(f"Estimators Amount - {estim_qty}")
+        plt.show()
 
 
 statistics = {
     "WILKOXON": wilcoxon,
     "T_STUDENT": tStudent
+}
+
+statistics2 = {
+    "WILKOXON": wilcoxon2,
+    "T_STUDENT": tStudent2
 }
 
 
@@ -244,41 +388,43 @@ def calculateStatistics():
     # getTotalMeanScores(scr)
     # clf_base, method, data, fold, est_qty
     ds = os.listdir('datasets2')
-    plotByClf(scr)
+    # plotByClf(scr)
     for stat_id, stat_name in enumerate(statistics):
         base_clf = ['GNB', 'CART']
-        # estim_qty = 5
+        estim_qty = 5
         base_clf_idx = 0
 
-        clfs = printResultBy(0, scr)
-        for clf in clfs:
-            #  method, data, fold,est_qty
-            print(colored("========= Base clf: " + str(base_clf[base_clf_idx]), 'yellow'))
-            base_clf_idx += 1
-            if base_clf_idx == 2:
-                base_clf_idx = 0
-            by_estimators_amount = printResultBy(3, clf)
-            estim_qty = 5
-            for estim in by_estimators_amount:
+        # clfs = printResultBy(0, scr)
+        # for clf in clfs:
+        #     #  method, data, fold,est_qty
+        #     print(colored("========= Base clf: " + str(base_clf[base_clf_idx]), 'yellow'))
+        #     base_clf_idx += 1
+        #     if base_clf_idx == 2:
+        #         base_clf_idx = 0
+        #     by_estimators_amount = printResultBy(3, clf)
+        #     estim_qty = 5
+        #     for estim in by_estimators_amount:
+        #         #  method, data, fold
+        #         print(colored("\n============== Estimators quantity: " + str(estim_qty) + " ==============", 'blue'))
+        #         print()
+        #         estim_qty += 5
+        #         statistics[stat_name](estim)
+        by_estimators_amount = printResultBy(4, scr)
+        for estim in by_estimators_amount:
+            # clf_base, method, data, fold
+            print(colored("\n============== Estimators quantity: " + str(estim_qty) + " ==============", 'blue'))
+            print()
+            estim_qty += 5
+            # wilcoxon2(estim)
+            # statistics[stat_name](estim)
+            clfs = printResultBy(0, estim)
+            for clf in clfs:
                 #  method, data, fold
-                print(colored("\n============== Estimators quantity: " + str(estim_qty) + " ==============", 'blue'))
-                print()
-                estim_qty += 5
-                statistics[stat_name](estim)
-                # by_estimators_amount = printResultBy(4, scr)
-                # for estim in by_estimators_amount:
-                #     # clf_base, method, data, fold
-                #     print(colored("\n============== Estimators quantity: " + str(estim_qty) + " ==============", 'blue'))
-                #     print()
-                #     estim_qty += 5
-                #     clfs = printResultBy(0, estim)
-                #     for clf in clfs:
-                #         #  method, data, fold
-                #         print(colored("========= Base clf: " + str(base_clf[base_clf_idx]), 'yellow'))
-                #         base_clf_idx += 1
-                #         if base_clf_idx == 2:
-                #             base_clf_idx = 0
-                #         statistics[stat_name](estim)
+                print(colored("========= Base clf: " + str(base_clf[base_clf_idx]), 'yellow'))
+                base_clf_idx += 1
+                if base_clf_idx == 2:
+                    base_clf_idx = 0
+                statistics[stat_name](clf)
 
 
 # calculateStatistics()
