@@ -9,6 +9,7 @@ from pipenv.vendor.vistir.termcolors import colored
 
 en = Ensemble()
 
+
 def wilcoxon2(estim):
     # clf_base, method, data, fold
     print(colored("WILKOXON2", 'magenta'))
@@ -24,31 +25,29 @@ def wilcoxon2(estim):
     # ranks = np.array(ranks)
     # print("\nRanks:\n", ranks)
 
-
-    #mean_scores = np.mean(mean_scores, axis=0)
+    # mean_scores = np.mean(mean_scores, axis=0)
     for mr in mean_scores:
         ranks.append(rankdata(mr).tolist())
     ranks = np.array(ranks)
     # print("\nRanks:\n", ranks)
 
-
     # mean_ranks =np.mean(mean_ranks_tmp,axis=0)
-    #print(mean_ranks.T)
+    # print(mean_ranks.T)
     mean_ranks = np.mean(ranks, axis=0)
     print("\nMean ranks:\n", mean_ranks)
     # print("AdaBoost, Bagging, Random Subspace")
 
     alfa = .05
-    w_statistic = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
-    p_value = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    w_statistic = np.zeros((len(en.methods) * len(en.clfs), len(en.methods) * len(en.clfs)))
+    p_value = np.zeros((len(en.methods) * len(en.clfs), len(en.methods) * len(en.clfs)))
 
-    for i in range(len(en.methods)*len(en.clfs)):
-        for j in range(len(en.methods)*len(en.clfs)):
+    for i in range(len(en.methods) * len(en.clfs)):
+        for j in range(len(en.methods) * len(en.clfs)):
             w_statistic[i, j], p_value[i, j] = ranksums(ranks.T[i], ranks.T[j])
-    headers=[]
+    headers = []
     for m in en.methods.keys():
         for c in en.clfs.keys():
-            headers.append(m+c)
+            headers.append(m + c)
     # headers = list(en.methods.keys())*2
     names_column = np.expand_dims(np.array(headers), axis=1)
     w_statistic_table = np.concatenate((names_column, w_statistic), axis=1)
@@ -57,13 +56,13 @@ def wilcoxon2(estim):
     p_value_table = tabulate(p_value_table, headers, floatfmt=".2f")
     # print("\nw-statistic:\n", w_statistic_table, "\n\np-value:\n", p_value_table)
 
-    advantage = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    advantage = np.zeros((len(en.methods) * len(en.clfs), len(en.methods) * len(en.clfs)))
     advantage[w_statistic > 0] = 1
     advantage_table = tabulate(np.concatenate(
         (names_column, advantage), axis=1), headers)
     # print("\nAdvantage:\n", advantage_table)
 
-    significance = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    significance = np.zeros((len(en.methods) * len(en.clfs), len(en.methods) * len(en.clfs)))
     significance[p_value <= alfa] = 1
     significance_table = tabulate(np.concatenate(
         (names_column, significance), axis=1), headers)
@@ -75,46 +74,45 @@ def wilcoxon2(estim):
     print("Statistically significantly better:\n", stat_better_table)
     print(len(stat_better_table))
 
+
 def tStudent2(estim):
     # clf_base, method, data, fold
     print(colored("WILKOXON2", 'magenta'))
     # print(clf)
-    mean_scores = np.mean(estim, axis=3).T
+    mean_scores = np.mean(estim, axis=3)
     # clf_base, method, data
     # print("\nMean scores:\n", mean_scores)
     # print(mean_scores)
-    ranks = []
+    # ranks = []
     # for mss in mean_scores:
     #     for ms in mss:
     #         ranks.append(rankdata(ms).tolist())
     # ranks = np.array(ranks)
     # print("\nRanks:\n", ranks)
 
-
-    #mean_scores = np.mean(mean_scores, axis=0)
-    for mr in mean_scores:
-        ranks.append(rankdata(mr).tolist())
-    ranks = np.array(ranks)
+    # mean_scores = np.mean(mean_scores, axis=0)
+    # for mr in mean_scores:
+    #     ranks.append(rankdata(mr).tolist())
+    # ranks = np.array(ranks)
     # print("\nRanks:\n", ranks)
 
-
     # mean_ranks =np.mean(mean_ranks_tmp,axis=0)
-    #print(mean_ranks.T)
-    mean_ranks = np.mean(ranks, axis=0)
-    print("\nMean ranks:\n", mean_ranks)
+    # print(mean_ranks.T)
+    # mean_ranks = np.mean(ranks, axis=0)
+    # print("\nMean ranks:\n", mean_ranks)
     # print("AdaBoost, Bagging, Random Subspace")
 
     alfa = .05
-    t_statistic = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
-    p_value = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    t_statistic = np.zeros((len(en.methods) * len(en.clfs), len(en.methods) * len(en.clfs)))
+    p_value = np.zeros((len(en.methods) * len(en.clfs), len(en.methods) * len(en.clfs)))
 
-    for i in range(len(en.methods)*len(en.clfs)):
-        for j in range(len(en.methods)*len(en.clfs)):
-            t_statistic[i, j], p_value[i, j] = ttest_rel(ranks.T[i], ranks.T[j])
-    headers=[]
+    for i in range(len(en.methods) * len(en.clfs)):
+        for j in range(len(en.methods) * len(en.clfs)):
+            t_statistic[i, j], p_value[i, j] = ttest_rel(mean_scores[i], mean_scores[j])
+    headers = []
     for m in en.methods.keys():
         for c in en.clfs.keys():
-            headers.append(m+c)
+            headers.append(m + c)
     # headers = list(en.methods.keys())*2
     names_column = np.expand_dims(np.array(headers), axis=1)
     w_statistic_table = np.concatenate((names_column, t_statistic), axis=1)
@@ -123,13 +121,13 @@ def tStudent2(estim):
     p_value_table = tabulate(p_value_table, headers, floatfmt=".2f")
     # print("\nw-statistic:\n", w_statistic_table, "\n\np-value:\n", p_value_table)
 
-    advantage = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    advantage = np.zeros((len(en.methods) * len(en.clfs), len(en.methods) * len(en.clfs)))
     advantage[t_statistic > 0] = 1
     advantage_table = tabulate(np.concatenate(
         (names_column, advantage), axis=1), headers)
     # print("\nAdvantage:\n", advantage_table)
 
-    significance = np.zeros((len(en.methods)*len(en.clfs), len(en.methods)*len(en.clfs)))
+    significance = np.zeros((len(en.methods) * len(en.clfs), len(en.methods) * len(en.clfs)))
     significance[p_value <= alfa] = 1
     significance_table = tabulate(np.concatenate(
         (names_column, significance), axis=1), headers)
@@ -140,6 +138,8 @@ def tStudent2(estim):
         (names_column, stat_better), axis=1), headers)
     print("Statistically significantly better:\n", stat_better_table)
     print(len(stat_better_table))
+
+
 def wilcoxon(clf):
     print(colored("WILKOXON", 'magenta'))
     # print(clf)
@@ -185,24 +185,29 @@ def wilcoxon(clf):
     significance_table = tabulate(np.concatenate(
         (names_column, significance), axis=1), headers)
     # print(colored("\nStatistical significance (alpha = 0.05):", 'magenta'))
+    # print(significance_table)
 
     stat_better = significance * advantage
     stat_better_table = tabulate(np.concatenate(
         (names_column, stat_better), axis=1), headers)
-    print(colored("Statistically significantly better:\n",  'magenta'))
-    print(stat_better_table,)
+    # print(colored("Statistically significantly better:\n", 'magenta'))
+    # print(stat_better_table, )
+
 
 def tStudent(clf):
     print(colored("T-STUDENT", 'green'))
-    mean_scores = np.mean(clf, axis=2).T
-    # print("\nMean scores:\n", mean_scores)
-    ranks = []
-    for ms in mean_scores:
-        ranks.append(rankdata(ms).tolist())
-    ranks = np.array(ranks)
-    # print("\nRanks:\n", ranks)
+    # print("clf", clf.shape)
+    mean_scores = np.mean(clf, axis=2)
 
-    mean_ranks = np.mean(ranks, axis=0)
+    # print("\nMean scores:\n", mean_scores)
+
+    # ranks = []
+    # for ms in mean_scores:
+    #     ranks.append(rankdata(ms).tolist())
+    # ranks = np.array(ranks)
+    # # print("\nRanks:\n", ranks)
+    #
+    # mean_ranks = np.mean(ranks, axis=0)
     # mean_ranks =np.mean(mean_ranks_tmp,axis=0)
 
     # print("\nMean ranks:\n", mean_ranks)
@@ -212,7 +217,8 @@ def tStudent(clf):
     p_value = np.zeros((len(en.methods), len(en.methods)))
     for i in range(len(en.methods)):
         for j in range(len(en.methods)):
-            t_statistic[i, j], p_value[i, j] = ttest_rel(mean_scores[i], mean_scores[j])
+            # print("spr", mean_scores[i].shape, mean_scores[j].shape)
+            t_statistic[i, j], p_value[i, j] = ttest_rel(mean_scores[i], mean_scores[j], nan_policy='omit')
     # print("t-statistic:\n", t_statistic, "\n\np-value:\n", p_value)
     headers = list(en.methods.keys())
     names_column = np.expand_dims(np.array(list(en.methods.keys())), axis=1)
@@ -231,14 +237,13 @@ def tStudent(clf):
     # print(colored("\nStatistical significance (alpha = 0.05):", 'green'))
     # print(significance_table)
     stat_better = significance * advantage
-    stat_better_table = tabulate(np.concatenate(
-        (names_column, stat_better), axis=1), headers)
-    print(colored("Statistically significantly better:\n",  'green'))
-    print(stat_better_table,)
+    stat_better_table = tabulate(np.concatenate((names_column, stat_better), axis=1), headers)
+    print(colored("Statistically significantly better:\n", 'green'))
+    print(stat_better_table, )
 
 
 def saveToSCV(data, first_row, y_label, name):
-    with open(name+'.csv', 'w', newline='') as file:
+    with open(name + '.csv', 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(first_row)
         # writer.writerow([["GNB", "CART"], ["GNB", "CART"], ["GNB", "CART"]])
@@ -251,8 +256,7 @@ def saveToSCV(data, first_row, y_label, name):
                 data[i][j] = round(data[i][j], 3)
 
         for y, d in zip(y_label, data):
-
-            writer.writerow([y]+d.tolist())
+            writer.writerow([y] + d.tolist())
 
 
 # saveToSCV([1,2,3,4,5,6])
@@ -296,7 +300,7 @@ def getTotalMeanScores(scores):
     mean_scores4 = np.mean(mean_scores4, axis=0)
     mean_scores4 = np.mean(mean_scores4, axis=1).T
     print(colored(mean_scores4, 'red'))
-    saveToSCV(mean_scores, ["Estimators Amount", "Ada Boost", "Bagging", "Random Subspace"], [5,10,15],"byest")
+    saveToSCV(mean_scores, ["Estimators Amount", "Ada Boost", "Bagging", "Random Subspace"], [5, 10, 15], "byest")
 
     #######BASE CLFS
     print('\n\nBASE CLFS')
@@ -304,8 +308,7 @@ def getTotalMeanScores(scores):
     mean_scores5 = np.mean(mean_scores5, axis=2)
     mean_scores5 = np.mean(mean_scores5, axis=2)
     print(colored(mean_scores5, 'red'))
-    saveToSCV(mean_scores5, ["Base Clf", "Ada Boost", "Bagging", "Random Subspace"],['GNB', 'CART'],"byclf" )
-
+    saveToSCV(mean_scores5, ["Base Clf", "Ada Boost", "Bagging", "Random Subspace"], ['GNB', 'CART'], "byclf")
 
 
 def plotByClf(scr):
@@ -320,7 +323,7 @@ def plotByClf(scr):
     for i in x_label:
         elo = os.path.splitext(i)
         tmp.append(elo[0])
-    x_label=tmp
+    x_label = tmp
     x_label = [y for _, y in sorted(zip(order, x_label))]
     met = ["AdaBoost-GNB", "Bagging-GNB", "RandomSubspace-GNB", "AdaBoost-CART", "Bagging-CART", "RandomSubspace-CART"]
 
@@ -387,7 +390,7 @@ def calculateStatistics():
     scr = np.load('results.npy')
     # getTotalMeanScores(scr)
     # clf_base, method, data, fold, est_qty
-    ds = os.listdir('datasets2')
+    # ds = os.listdir('datasets2')
     # plotByClf(scr)
     for stat_id, stat_name in enumerate(statistics):
         base_clf = ['GNB', 'CART']
@@ -416,7 +419,7 @@ def calculateStatistics():
             print()
             estim_qty += 5
             # wilcoxon2(estim)
-            # statistics[stat_name](estim)
+            # statistics2[stat_name](estim)
             clfs = printResultBy(0, estim)
             for clf in clfs:
                 #  method, data, fold
